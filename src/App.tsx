@@ -1,35 +1,48 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { Toaster } from 'sonner';
+import { AppHeader } from './components/layout/AppHeader';
+import { AppFooter } from './components/layout/AppFooter';
+import { useCandidate, CandidateSection } from './features/candidate';
+import { JobList } from './features/jobs';
 
 function App() {
-  const [count, setCount] = useState(0)
+  const { candidate, isLoading, error } = useCandidate();
 
   return (
     <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+      <Toaster position="top-right" richColors closeButton />
+
+      <div className="flex min-h-dvh flex-col">
+        <AppHeader />
+
+        <main className="flex-1 px-5 py-10">
+          <div className="mx-auto flex max-w-2xl flex-col gap-10">
+            <CandidateSection
+              candidate={candidate}
+              isLoading={isLoading}
+              error={error}
+            />
+
+            <section className="flex flex-col gap-4">
+              <h2 className="text-[0.72rem] font-semibold uppercase tracking-widest text-white/40">
+                Open Positions
+              </h2>
+              {candidate ? (
+                <JobList candidate={candidate} />
+              ) : (
+                <div className="flex flex-col items-center gap-2.5 rounded-xl border border-white/5 bg-[#111118] px-5 py-9 text-center">
+                  <p className="text-[0.85rem] text-white/30">
+                    Waiting for candidate data…
+                  </p>
+                </div>
+              )}
+            </section>
+          </div>
+        </main>
+
+        <AppFooter />
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
     </>
-  )
+  );
 }
 
-export default App
+export default App;
