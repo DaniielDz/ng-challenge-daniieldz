@@ -18,15 +18,20 @@ export function JobItem({ job, candidate }: Props) {
     e.preventDefault();
 
     const trimmed = repoUrl.trim();
+
     if (!trimmed) {
-      toast.error('Please enter your GitHub repository URL.');
+      toast.error('Ingresá la URL de tu repositorio de GitHub antes de enviar.');
       return;
     }
 
     try {
-      new URL(trimmed);
+      const url = new URL(trimmed);
+      if (!url.hostname.includes('github.com')) {
+        toast.error('La URL debe ser de GitHub (github.com).');
+        return;
+      }
     } catch {
-      toast.error('Please enter a valid URL.');
+      toast.error('La URL ingresada no es válida. Ej: https://github.com/usuario/repo');
       return;
     }
 
@@ -36,13 +41,17 @@ export function JobItem({ job, candidate }: Props) {
         uuid: candidate.uuid,
         jobId: job.id,
         candidateId: candidate.candidateId,
+        applicationId: candidate.applicationId,
         repoUrl: trimmed,
       });
       setApplied(true);
-      toast.success(`Application sent for "${job.title}"!`);
+      toast.success(`¡Postulación enviada para "${job.title}"!`);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unexpected error. Try again.';
-      toast.error(message);
+      const message =
+        err instanceof Error
+          ? err.message
+          : 'Error inesperado al enviar la postulación. Intentá de nuevo.';
+      toast.error(message, { duration: 6000 });
     } finally {
       setIsSubmitting(false);
     }
@@ -51,11 +60,10 @@ export function JobItem({ job, candidate }: Props) {
   return (
     <article
       className={`rounded-xl border p-4 shadow-sm transition-all duration-200 ${applied
-          ? 'border-green-500/20 bg-[#0f1a13]'
-          : 'border-white/5 bg-[#111118] hover:border-white/10 hover:shadow-md'
+        ? 'border-green-500/20 bg-[#0f1a13]'
+        : 'border-white/5 bg-[#111118] hover:border-white/10 hover:shadow-md'
         }`}
     >
-      {/* Header */}
       <div className="mb-3.5 flex items-center gap-2.5">
         <h2 className="flex-1 text-[0.95rem] font-medium text-white">{job.title}</h2>
         {applied && (
@@ -65,7 +73,6 @@ export function JobItem({ job, candidate }: Props) {
         )}
       </div>
 
-      {/* Form */}
       <form className="flex items-center gap-2" onSubmit={handleSubmit}>
         <div className="relative flex-1">
           <Link

@@ -17,7 +17,10 @@ export function useCandidate(): UseCandidateReturn {
 
   useEffect(() => {
     if (!CANDIDATE_EMAIL) {
-      setError("VITE_CANDIDATE_EMAIL not set. Add it to your .env file.");
+      setError(
+        "VITE_CANDIDATE_EMAIL no está configurado. " +
+          "Copiá .env.example como .env y completá tu email.",
+      );
       setIsLoading(false);
       return;
     }

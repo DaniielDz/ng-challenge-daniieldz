@@ -3,6 +3,29 @@ import type { Candidate, Job, ApplyPayload, ApplyResponse } from "../types";
 const BASE_URL =
   "https://botfilter-h5ddh6dye8exb7ha.centralus-01.azurewebsites.net";
 
+function parseApiError(
+  body: Record<string, unknown>,
+  fallback: string,
+): string {
+  if (typeof body?.message === "string") return body.message;
+
+  if (body?.details) {
+    const fieldErrors = (body.details as Record<string, unknown>)
+      ?.fieldErrors as Record<string, string[]> | undefined;
+
+    if (fieldErrors) {
+      const messages = Object.entries(fieldErrors).flatMap(([field, errors]) =>
+        errors.map((e) => `${field}: ${e}`),
+      );
+      if (messages.length > 0) return messages.join(" · ");
+    }
+  }
+
+  if (typeof body?.error === "string") return body.error;
+
+  return fallback;
+}
+
 export async function getCandidateByEmail(email: string): Promise<Candidate> {
   const res = await fetch(
     `${BASE_URL}/api/candidate/get-by-email?email=${encodeURIComponent(email)}`,
@@ -11,7 +34,10 @@ export async function getCandidateByEmail(email: string): Promise<Candidate> {
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     throw new Error(
-      body?.message ?? `Error ${res.status}: failed to fetch candidate`,
+      parseApiError(
+        body,
+        `No se pudo obtener el candidato (${res.status}). Verificá el email configurado.`,
+      ),
     );
   }
 
@@ -24,7 +50,10 @@ export async function getJobsList(): Promise<Job[]> {
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     throw new Error(
-      body?.message ?? `Error ${res.status}: failed to fetch jobs`,
+      parseApiError(
+        body,
+        `No se pudo obtener la lista de posiciones (${res.status}). Intentá de nuevo.`,
+      ),
     );
   }
 
@@ -42,7 +71,13 @@ export async function applyToJob(
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
-    throw new Error(body?.message ?? `Error ${res.status}: failed to apply`);
+    console.error("[applyToJob] error body:", body);
+    throw new Error(
+      parseApiError(
+        body,
+        `No se pudo enviar la postulación (${res.status}). Intentá de nuevo.`,
+      ),
+    );
   }
 
   return res.json();
